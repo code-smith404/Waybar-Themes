@@ -1,0 +1,147 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 26,
+  "spacing": 3,
+  "margin": "2px 4px 0",
+  "modules-left": [
+    "custom/launcher",
+    "custom/tag-1",
+    "custom/tag-2",
+    "custom/tag-3",
+    "custom/tag-4",
+    "custom/tag-5",
+    "custom/window-title"
+  ],
+  "modules-center": [
+    "clock",
+    "custom/current-tags"
+  ],
+  "modules-right": [
+    "network",
+    "custom/layout",
+    "bluetooth",
+    "pulseaudio",
+    "backlight",
+    "battery"
+  ],
+  "custom/launcher": {
+    "format": "󰣇",
+    "tooltip": "MangoWM overview",
+    "on-click": "mmsg dispatch enteroverview"
+  },
+  "custom/tag-1": {
+    "exec": "$HOME/.config/waybar/scripts/mango-tags 1",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 1,
+    "on-click": "mmsg dispatch view,1 >/dev/null",
+    "on-click-right": "mmsg dispatch toggleview,1 >/dev/null"
+  },
+  "custom/tag-2": {
+    "exec": "$HOME/.config/waybar/scripts/mango-tags 2",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 1,
+    "on-click": "mmsg dispatch view,2 >/dev/null",
+    "on-click-right": "mmsg dispatch toggleview,2 >/dev/null"
+  },
+  "custom/tag-3": {
+    "exec": "$HOME/.config/waybar/scripts/mango-tags 3",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 1,
+    "on-click": "mmsg dispatch view,3 >/dev/null",
+    "on-click-right": "mmsg dispatch toggleview,3 >/dev/null"
+  },
+  "custom/tag-4": {
+    "exec": "$HOME/.config/waybar/scripts/mango-tags 4",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 1,
+    "on-click": "mmsg dispatch view,4 >/dev/null",
+    "on-click-right": "mmsg dispatch toggleview,4 >/dev/null"
+  },
+  "custom/tag-5": {
+    "exec": "$HOME/.config/waybar/scripts/mango-tags 5",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 1,
+    "on-click": "mmsg dispatch view,5 >/dev/null",
+    "on-click-right": "mmsg dispatch toggleview,5 >/dev/null"
+  },
+  "custom/window-title": {
+    "exec": "$HOME/.config/waybar/scripts/mango-title",
+    "return-type": "json",
+    "format": " {}",
+    "tooltip": true,
+    "interval": 1,
+    "max-length": 48
+  },
+  "custom/current-tags": {
+    "exec": "$HOME/.config/waybar/scripts/mango-current-tags",
+    "return-type": "json",
+    "format": "󰓅 {}",
+    "tooltip": true,
+    "interval": 1
+  },
+  "custom/layout": {
+    "exec": "$HOME/.config/waybar/scripts/mango-layout",
+    "return-type": "json",
+    "format": " {}",
+    "tooltip": false,
+    "interval": 5
+  },
+  "network": {
+    "interval": 2,
+    "format-wifi": "󰇚 {bandwidthDownBytes} 󰕒 {bandwidthUpBytes}",
+    "format-ethernet": "󰇚 {bandwidthDownBytes} 󰕒 {bandwidthUpBytes}",
+    "format-linked": "󰇚 0 B/s 󰕒 0 B/s",
+    "format-disconnected": "󰖪",
+    "tooltip-format": "{ifname}: {ipaddr}/{cidr}"
+  },
+  "bluetooth": {
+    "format": "",
+    "format-disabled": "󰂲",
+    "format-off": "󰂲",
+    "format-on": "",
+    "format-connected": " {num_connections}",
+    "tooltip-format": "{controller_alias}\n{num_connections} connected"
+  },
+  "pulseaudio": {
+    "format": " {volume}%",
+    "format-muted": "",
+    "scroll-step": 5,
+    "tooltip-format": "{desc}"
+  },
+  "backlight": {
+    "format": " {percent}%",
+    "tooltip": false
+  },
+  "battery": {
+    "format": "{icon} {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-plugged": " {capacity}%",
+    "format-icons": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "states": {
+      "warning": 30,
+      "critical": 15
+    },
+    "tooltip-format": "{timeTo}"
+  },
+  "clock": {
+    "format": " {:%H:%M}",
+    "tooltip-format": "{:%A, %d %B %Y}"
+  }
+}

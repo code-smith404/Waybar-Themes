@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -z "${WAYBAR_OUTPUT_NAME:-}" ]]; then
+  jq -cn '{text: "", class: "unavailable", tooltip: "Waybar did not provide an output name"}'
+  exit 0
+fi
+
+if ! response="$(mmsg get monitor "$WAYBAR_OUTPUT_NAME" 2>/dev/null)"; then
+  jq -cn '{text: "", class: "unavailable", tooltip: "MangoWM window status is unavailable"}'
+  exit 0
+fi
+
+if ! result="$(jq -c '
+  if type != "object" or .error then
+    {text: "", class: "unavailable", tooltip: "MangoWM window status is unavailable"}
+  elif (.active_client.title | type) == "string" and (.active_client.title | length) > 0 then
+    {text: .active_client.title, tooltip: .active_client.title}
+  else
+    {text: "", class: "empty", tooltip: "No active window"}
+  end
+' <<<"$response")"; then
+  jq -cn '{text: "", class: "unavailable", tooltip: "Could not parse MangoWM window status"}'
+  exit 0
+fi
+
+printf '%s\n' "$result"

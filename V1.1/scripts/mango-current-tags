@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -z "${WAYBAR_OUTPUT_NAME:-}" ]]; then
+  printf 'WAYBAR_OUTPUT_NAME is not set; run this script from a Waybar module.\n' >&2
+  exit 1
+fi
+
+mmsg get monitor "$WAYBAR_OUTPUT_NAME" |
+  jq -ce '
+    if .error then
+      error(.error)
+    elif (.active_tags | type) == "array" then
+      .active_tags as $tags
+      | {
+          text: ($tags | map(tostring) | join(" ")),
+          tooltip: ("Active tags: " + ($tags | map(tostring) | join(", ")))
+        }
+    else
+      error("unexpected response from mmsg get monitor")
+    end
+  '

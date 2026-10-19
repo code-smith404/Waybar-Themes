@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+tag="${1:-}"
+case "$tag" in
+  1|2|3|4|5) ;;
+  *)
+    printf 'Usage: %s {1|2|3|4|5}\n' "$0" >&2
+    exit 2
+    ;;
+esac
+
+if [[ -z "${WAYBAR_OUTPUT_NAME:-}" ]]; then
+  jq -cn --arg tag "$tag" \
+    '{text: $tag, class: "unavailable", tooltip: "Waybar did not provide an output name"}'
+  exit 0
+fi
+
+if ! response="$(mmsg get tags "$WAYBAR_OUTPUT_NAME" 2>/dev/null)"; then
+  jq -cn --arg tag "$tag" \
+    '{text: $tag, class: "unavailable", tooltip: "MangoWM tag status is unavailable"}'
+  exit 0
+fi
+
+if ! result="$(jq -c --argjson index "$tag" '
+  if (.tags | type) != "array" then
+    {text: ($index | tostring), class: "unavailable", tooltip: "Unexpected MangoWM tag response"}
+  else
+    ([.tags[] | select(.index == $index)] | first) as $tag
+    | if $tag == null then
+        {text: ($index | tostring), class: "empty", tooltip: ("Tag " + ($index | tostring) + " is not configured")}
+      else
+        {
+          text: ($tag.index | tostring),
+          class: (
+            if $tag.is_urgent then "urgent"
+            elif $tag.is_active then "active"
+            elif ($tag.client_count // 0) > 0 then "occupied"
+            else "empty"
+            end
+          ),
+          tooltip: ("Tag " + ($tag.index | tostring) + " · " + (($tag.client_count // 0) | tostring) + " windows")
+        }
+      end
+  end
+' <<<"$response")"; then
+  jq -cn --arg tag "$tag" \
+    '{text: $tag, class: "unavailable", tooltip: "Could not parse MangoWM tag status"}'
+  exit 0
+fi
+
+printf '%s\n' "$result"

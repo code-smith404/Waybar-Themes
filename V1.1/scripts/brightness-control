@@ -1,0 +1,225 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+action="${1:-status}"
+targets=()
+target_labels=()
+current_values=()
+max_values=()
+backlight_seen=0
+backlightctl_missing=0
+backlight_unreadable=0
+ddc_seen=0
+ddc_failed=0
+ddc_unsupported=0
+
+read_ddc_brightness() {
+  local display="$1"
+  local response values
+
+  response="$(ddcutil getvcp 10 --display "$display" --brief 2>&1)" || return 1
+  values="$(awk '$1 == "VCP" && tolower($2) == "10" { print $(NF - 1), $NF; exit }' <<<"$response")"
+  read -r DDC_CURRENT DDC_MAX <<<"$values"
+  [[ "${DDC_CURRENT:-}" =~ ^[0-9]+$ && "${DDC_MAX:-}" =~ ^[0-9]+$ && "$DDC_MAX" -gt 0 ]]
+}
+
+detect_targets() {
+  local path name current maximum detection line display monitor
+  local monitor_vendor monitor_model index
+
+  for path in /sys/class/backlight/*/brightness; do
+    [[ -e "$path" ]] || continue
+    backlight_seen=1
+    if ! command -v brightnessctl >/dev/null 2>&1; then
+      backlightctl_missing=1
+      continue
+    fi
+    name="${path%/brightness}"
+    name="${name##*/}"
+    if [[ ! -r "$path" || ! -r "${path%/brightness}/max_brightness" ]]; then
+      backlight_unreadable=1
+      continue
+    fi
+    if ! read -r current <"$path" || ! read -r maximum <"${path%/brightness}/max_brightness"; then
+      backlight_unreadable=1
+      continue
+    fi
+    if [[ ! "$current" =~ ^[0-9]+$ || ! "$maximum" =~ ^[0-9]+$ ]] || (( maximum == 0 )); then
+      backlight_unreadable=1
+      continue
+    fi
+    targets+=("backlight:$name")
+    target_labels+=("Kernel backlight: $name")
+    current_values+=("$current")
+    max_values+=("$maximum")
+  done
+
+  if command -v ddcutil >/dev/null 2>&1; then
+    if detection="$(ddcutil detect --brief 2>&1)"; then
+      local -a ddc_displays=()
+      local -a ddc_labels=()
+      while IFS= read -r line; do
+        if [[ "$line" =~ ^[[:space:]]*Display[[:space:]]+([0-9]+) ]]; then
+          display="${BASH_REMATCH[1]}"
+          ddc_seen=1
+          ddc_displays+=("$display")
+          ddc_labels+=("DDC/CI display $display")
+        elif [[ "$line" =~ ^[[:space:]]*Monitor:[[:space:]]*(.*)$ ]] && ((${#ddc_displays[@]} > 0)); then
+          monitor="${BASH_REMATCH[1]}"
+          IFS=: read -r monitor_vendor monitor_model _ <<<"$monitor"
+          if [[ -n "${monitor_model:-}" ]]; then
+            index="$((${#ddc_displays[@]} - 1))"
+            ddc_labels[$index]="${monitor_vendor}: ${monitor_model}"
+          fi
+        fi
+      done <<<"$detection"
+      for index in "${!ddc_displays[@]}"; do
+        display="${ddc_displays[$index]}"
+        if read_ddc_brightness "$display"; then
+          targets+=("ddc:$display")
+          target_labels+=("${ddc_labels[$index]}")
+          current_values+=("$DDC_CURRENT")
+          max_values+=("$DDC_MAX")
+        else
+          ddc_unsupported=1
+        fi
+      done
+    else
+      ddc_failed=1
+    fi
+  fi
+}
+
+emit_status() {
+  local text="$1"
+  local class="$2"
+  local tooltip="$3"
+  jq -cn --arg text "$text" --arg class "$class" --arg tooltip "$tooltip" \
+    '{text: $text, class: $class, tooltip: $tooltip}'
+}
+
+unavailable_reason() {
+  if (( backlight_seen && backlightctl_missing )); then
+    printf '%s' 'A kernel backlight device exists, but brightnessctl is not installed. Install the Arch package brightnessctl.'
+  elif (( backlight_unreadable )); then
+    printf '%s' 'A kernel backlight device exists but its brightness values cannot be read. Check device availability and permissions.'
+  elif (( ddc_failed )); then
+    printf '%s' 'ddcutil could not detect monitors. Check DDC/CI support, I2C device access, and the ddcutil permissions setup.'
+  elif (( ddc_seen && ddc_unsupported )); then
+    printf '%s' 'A DDC/CI display was detected, but VCP 0x10 could not be read. Check monitor OSD settings, DDC/CI support, and I2C device permissions.'
+  else
+    printf '%s' 'No controllable brightness interface was detected. Install brightnessctl for kernel backlights or ddcutil for DDC/CI monitors; hardware brightness control must be exposed by the device and driver. Software gamma is not used.'
+  fi
+}
+
+detect_targets
+target_count="${#targets[@]}"
+
+if (( target_count == 0 )); then
+  if [[ "$action" == status ]]; then
+    emit_status '󰃠 --' unavailable "$(unavailable_reason)"
+    exit 0
+  fi
+  printf 'Brightness control unavailable: %s\n' "$(unavailable_reason)" >&2
+  exit 1
+fi
+
+state_dir="${XDG_CACHE_HOME:-"$HOME/.cache"}"
+state_file="$state_dir/waybar-brightness-target"
+selected=0
+if [[ -r "$state_file" ]]; then
+  read -r saved_selection <"$state_file" || saved_selection=''
+  if [[ "${saved_selection:-}" =~ ^[0-9]+$ ]] && (( saved_selection < target_count )); then
+    selected="$saved_selection"
+  fi
+fi
+
+case "$action" in
+  status)
+    target="${targets[$selected]}"
+    current="${current_values[$selected]}"
+    maximum="${max_values[$selected]}"
+    percent=$((current * 100 / maximum))
+    if [[ "$target" == backlight:* ]]; then
+      device="${target#backlight:}"
+      label="Kernel backlight: $device at ${percent}% (brightnessctl)"
+      control_path="/sys/class/backlight/$device/brightness"
+      if [[ ! -w "$control_path" ]]; then
+        label+="; brightness may require a one-time udev/group permission fix"
+      fi
+    else
+      display="${target#ddc:}"
+      label="${target_labels[$selected]} at ${percent}% (ddcutil)"
+    fi
+    if (( target_count > 1 )); then
+      label+="; click to cycle among $target_count detected displays"
+    fi
+    emit_status "󰃠 ${percent}%" normal "$label"
+    ;;
+  list)
+    for ((index = 0; index < target_count; index++)); do
+      target="${targets[$index]}"
+      current="${current_values[$index]}"
+      maximum="${max_values[$index]}"
+      percent=$((current * 100 / maximum))
+      if [[ "$target" == backlight:* ]]; then
+        printf '%s: %s at %s%% (brightnessctl)\n' \
+          "$((index + 1))" "${target_labels[$index]}" "$percent"
+      else
+        printf '%s: %s at %s%% (ddcutil)\n' \
+          "$((index + 1))" "${target_labels[$index]}" "$percent"
+      fi
+    done
+    ;;
+  cycle)
+    if (( target_count > 1 )); then
+      selected=$(((selected + 1) % target_count))
+      mkdir -p "$state_dir"
+      (umask 077; printf '%s\n' "$selected" >"$state_file")
+    fi
+    ;;
+  select)
+    requested="${2:-}"
+    if [[ ! "$requested" =~ ^[1-9][0-9]*$ ]] || (( requested > target_count )); then
+      printf 'Select a brightness target from 1 to %s.\n' "$target_count" >&2
+      exit 2
+    fi
+    selected=$((requested - 1))
+    mkdir -p "$state_dir"
+    (umask 077; printf '%s\n' "$selected" >"$state_file")
+    ;;
+  up|down)
+    target="${targets[$selected]}"
+    if [[ "$target" == backlight:* ]]; then
+      device="${target#backlight:}"
+      if [[ "$action" == up ]]; then
+        brightnessctl --device "$device" set 5%+ >/dev/null
+      else
+        brightnessctl --device "$device" set 5%- >/dev/null
+      fi
+    else
+      display="${target#ddc:}"
+      if ! read_ddc_brightness "$display"; then
+        printf 'Could not read brightness from DDC/CI display %s (VCP 0x10).\n' "$display" >&2
+        exit 1
+      fi
+      step=$(((DDC_MAX + 19) / 20))
+      (( step > 0 )) || step=1
+      if [[ "$action" == up ]]; then
+        value=$((DDC_CURRENT + step))
+        (( value < DDC_MAX )) || value="$DDC_MAX"
+      else
+        value=$((DDC_CURRENT - step))
+        (( value > 0 )) || value=0
+      fi
+      if ! response="$(ddcutil setvcp 10 "$value" --display "$display" 2>&1)"; then
+        printf 'Could not set brightness on DDC/CI display %s: %s\n' "$display" "$response" >&2
+        exit 1
+      fi
+    fi
+    ;;
+  *)
+    printf 'Usage: %s {status|list|up|down|cycle|select NUMBER}\n' "$0" >&2
+    exit 2
+    ;;
+esac

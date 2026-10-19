@@ -1,0 +1,118 @@
+* {
+  border: none;
+  border-radius: 0;
+  font-family: "JetBrainsMono Nerd Font", "Font Awesome 6 Free", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  min-height: 0;
+}
+
+window#waybar {
+  color: #c8c9cd;
+  background: #17181c;
+  border: 1px solid #36373d;
+  border-radius: 8px;
+}
+
+tooltip {
+  color: #e5e5e7;
+  background: #202126;
+  border: 1px solid #494a51;
+  border-radius: 6px;
+}
+
+#custom-launcher,
+#custom-tag-1,
+#custom-tag-2,
+#custom-tag-3,
+#custom-tag-4,
+#custom-tag-5,
+#custom-window-title,
+#custom-current-tags,
+#custom-layout,
+#network,
+#bluetooth,
+#pulseaudio,
+#backlight,
+#battery,
+#clock {
+  padding: 0 7px;
+  margin: 3px 1px;
+  color: #b8b9be;
+  background: #292a2f;
+  border: 1px solid #34353b;
+  border-radius: 6px;
+}
+
+#custom-launcher {
+  min-width: 14px;
+  color: #d8d9dd;
+  background: #303137;
+}
+
+#custom-tag-1,
+#custom-tag-2,
+#custom-tag-3,
+#custom-tag-4,
+#custom-tag-5 {
+  min-width: 12px;
+  padding: 0 6px;
+  background: #303137;
+}
+
+#custom-tag-1.active,
+#custom-tag-2.active,
+#custom-tag-3.active,
+#custom-tag-4.active,
+#custom-tag-5.active {
+  color: #29201c;
+  background: #ff9d70;
+  border-color: #ff9d70;
+}
+
+#custom-tag-1.occupied,
+#custom-tag-2.occupied,
+#custom-tag-3.occupied,
+#custom-tag-4.occupied,
+#custom-tag-5.occupied {
+  color: #eeeeef;
+}
+
+#custom-tag-1.urgent,
+#custom-tag-2.urgent,
+#custom-tag-3.urgent,
+#custom-tag-4.urgent,
+#custom-tag-5.urgent {
+  color: #211815;
+  background: #e68d68;
+}
+
+#custom-window-title {
+  min-width: 120px;
+  padding: 0 9px;
+  color: #c5c6ca;
+  background: #232429;
+}
+
+#clock,
+#custom-current-tags {
+  color: #e0e1e4;
+  background: #303137;
+}
+
+#network,
+#custom-layout,
+#bluetooth,
+#pulseaudio,
+#backlight,
+#battery {
+  padding: 0 6px;
+}
+
+#battery.warning {
+  color: #e7c98e;
+}
+
+#battery.critical {
+  color: #e88c82;
+}

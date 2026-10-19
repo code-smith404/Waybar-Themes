@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+layout="$(mmsg get keyboardlayout | jq -er '.layout')"
+case "${layout,,}" in
+  *german*|*deutsch*) label="de" ;;
+  *english*) label="us" ;;
+  *) label="${layout:0:2}"; label="${label,,}" ;;
+esac
+
+jq -cn --arg text "$label" --arg tooltip "$layout" \
+  '{text: $text, tooltip: $tooltip}'
