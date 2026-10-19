@@ -8,16 +8,16 @@
 }
 
 window#waybar {
-  color: #c8c9cd;
-  background: #17181c;
-  border: 1px solid #36373d;
+  color: #a4a4a4;
+  background: #131315;
+  border: 1px solid #515151;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
 }
 
 tooltip {
   color: #e5e5e7;
-  background: #202126;
+  background: #27272a;
   border: 1px solid #494a51;
   border-radius: 6px;
 }
@@ -35,9 +35,9 @@ tooltip {
 #custom-brightness {
   padding: 0 7px;
   margin: 3px 1px;
-  color: #b8b9be;
-  background: #292a2f;
-  border: 1px solid #34353b;
+  color: #a4a4a4;
+  background: #27272a;
+  border: 1px solid #343436;
   border-radius: 6px;
 }
 
@@ -48,7 +48,7 @@ tooltip {
 #custom-tag-5 {
   min-width: 12px;
   padding: 0 6px;
-  background: #303137;
+  background: #27272a;
 }
 
 #custom-tag-1.active,
@@ -57,8 +57,8 @@ tooltip {
 #custom-tag-4.active,
 #custom-tag-5.active {
   color: #29201c;
-  background: #ff9d70;
-  border-color: #ff9d70;
+  background: #ff9b72;
+  border-color: #ff9b72;
 }
 
 #custom-tag-1.occupied,
@@ -81,8 +81,8 @@ tooltip {
 #custom-window-title {
   min-width: 180px;
   padding: 0 10px;
-  color: #c5c6ca;
-  background: #232429;
+  color: #a4a4a4;
+  background: #27272a;
 }
 
 #custom-window-title.empty {
@@ -90,8 +90,8 @@ tooltip {
 }
 
 #clock {
-  color: #e0e1e4;
-  background: #303137;
+  color: #a4a4a4;
+  background: #27272a;
 }
 
 #pulseaudio,

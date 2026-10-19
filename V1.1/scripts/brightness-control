@@ -151,6 +151,11 @@ case "$action" in
       display="${target#ddc:}"
       label="${target_labels[$selected]} at ${percent}% (ddcutil)"
     fi
+    if (( ddc_failed )); then
+      label+='; DDC/CI detection failed (check ddcutil and I2C permissions)'
+    elif (( ddc_unsupported )); then
+      label+='; one or more detected DDC displays have no readable brightness control'
+    fi
     if (( target_count > 1 )); then
       label+="; click to cycle among $target_count detected displays"
     fi
@@ -193,9 +198,17 @@ case "$action" in
     if [[ "$target" == backlight:* ]]; then
       device="${target#backlight:}"
       if [[ "$action" == up ]]; then
-        brightnessctl --device "$device" set 5%+ >/dev/null
+        if ! response="$(brightnessctl --device "$device" set 5%+ 2>&1)"; then
+          printf 'Could not increase kernel backlight %s with brightnessctl: %s\n' \
+            "$device" "$response" >&2
+          exit 1
+        fi
       else
-        brightnessctl --device "$device" set 5%- >/dev/null
+        if ! response="$(brightnessctl --device "$device" set 5%- 2>&1)"; then
+          printf 'Could not decrease kernel backlight %s with brightnessctl: %s\n' \
+            "$device" "$response" >&2
+          exit 1
+        fi
       fi
     else
       display="${target#ddc:}"

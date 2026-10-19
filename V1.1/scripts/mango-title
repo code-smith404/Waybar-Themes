@@ -15,7 +15,11 @@ if ! result="$(jq -c '
   if type != "object" or .error then
     {text: "", class: "unavailable", tooltip: "MangoWM window status is unavailable"}
   elif (.active_client.title | type) == "string" and (.active_client.title | length) > 0 then
-    {text: .active_client.title, tooltip: .active_client.title}
+    .active_client.title as $title
+    | {
+        text: (if ($title | length) > 48 then ($title[0:47] + "…") else $title end),
+        tooltip: $title
+      }
   else
     {text: "", class: "empty", tooltip: "No active window"}
   end
