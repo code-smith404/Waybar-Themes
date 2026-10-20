@@ -113,15 +113,19 @@ class TitleOverlay:
         self.window.set_focus_on_map(False)
         self.window.set_app_paintable(True)
         self.window.set_visual(self.window.get_screen().get_rgba_visual())
+        self.window.set_size_request(-1, 36)
 
         GtkLayerShell.init_for_window(self.window)
         GtkLayerShell.set_namespace(self.window, "waybar-focused-window-title")
-        GtkLayerShell.set_layer(self.window, GtkLayerShell.Layer.OVERLAY)
+        GtkLayerShell.set_layer(self.window, GtkLayerShell.Layer.TOP)
         GtkLayerShell.set_anchor(self.window, GtkLayerShell.Edge.TOP, True)
-        GtkLayerShell.set_margin(self.window, GtkLayerShell.Edge.TOP, 20)
+        GtkLayerShell.set_anchor(self.window, GtkLayerShell.Edge.LEFT, True)
+        GtkLayerShell.set_anchor(self.window, GtkLayerShell.Edge.RIGHT, True)
+        GtkLayerShell.set_margin(self.window, GtkLayerShell.Edge.TOP, 4)
         GtkLayerShell.set_exclusive_zone(self.window, -1)
         GtkLayerShell.set_keyboard_mode(self.window, GtkLayerShell.KeyboardMode.NONE)
 
+        self.alignment = Gtk.Alignment.new(0.5, 0.5, 0, 0)
         self.group = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=7)
         self.image = Gtk.Image()
         self.label = Gtk.Label()
@@ -129,14 +133,15 @@ class TitleOverlay:
         self.label.set_max_width_chars(64)
         self.group.pack_start(self.image, False, False, 0)
         self.group.pack_start(self.label, False, False, 0)
-        self.window.add(self.group)
+        self.alignment.add(self.group)
+        self.window.add(self.alignment)
         self.group.get_style_context().add_class("focused-window-group")
 
         css = Gtk.CssProvider()
         css.load_from_data(
             b"window { background-color: transparent; } "
             b".focused-window-group { color: #eef0fa; background-color: transparent; "
-            b"font-family: 'JetBrainsMono Nerd Font', sans-serif; font-size: 15px; font-weight: 500; }"
+            b"font-family: 'JetBrainsMono Nerd Font', sans-serif; font-size: 13px; font-weight: 500; }"
         )
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(),
@@ -145,6 +150,7 @@ class TitleOverlay:
         )
         self.theme = Gtk.IconTheme.get_default()
         self.window.show_all()
+        self.window.get_window().set_pass_through(True)
         self.image.hide()
         self.label.hide()
         GLib.timeout_add(POLL_MILLISECONDS, self.refresh)

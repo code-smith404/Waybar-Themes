@@ -1,9 +1,9 @@
 {
   "layer": "top",
   "position": "top",
-  "height": 50,
-  "spacing": 6,
-  "margin": "7px 7px 0px",
+  "height": 36,
+  "spacing": 3,
+  "margin": "4px 5px 0px",
   "fixed-center": true,
   "modules-left": [
     "custom/tag-1",

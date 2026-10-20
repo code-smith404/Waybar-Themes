@@ -26,6 +26,12 @@ there is no matching icon, it uses the generic `application-x-executable`
 icon. This uses MangoWM IPC and Wayland layer-shell, not Hyprland IPC or
 Hyprland-specific modules.
 
+The title group uses a transparent, click-through surface on the standard
+Wayland layer-shell `top` layer. It stretches across the output and centers the
+icon/title group in a 36 px row aligned to the bar; its non-exclusive zone does
+not reserve screen space. MangoWM is based on wlroots, whose compositors support
+the layer-shell protocol.
+
 The Waybar module must run inside the MangoWM session so Waybar supplies its
 output name and the helper can access the compositor's IPC.
 
@@ -85,5 +91,9 @@ Waybar custom module and exits with it.
   `.desktop` entry and its named icon are installed in the active icon theme.
 - If the overlay is missing, confirm `gtk-layer-shell` and `python-gobject` are
   installed and that Waybar was started inside MangoWM.
+- If MangoWM's IPC works but the helper logs that the overlay cannot be
+  created, check that the session is Wayland and the installed MangoWM build
+  supports the layer-shell protocol; the helper requires it to draw the icon
+  beside the GTK title label.
 - Install the listed Nerd Font and Font Awesome packages for the bar's
   typography and status glyphs.

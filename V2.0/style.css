@@ -2,7 +2,7 @@
   border: none;
   border-radius: 0;
   font-family: "JetBrainsMono Nerd Font", "Font Awesome 6 Free", sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   min-height: 0;
 }
@@ -11,8 +11,8 @@ window#waybar {
   color: #e4e7f2;
   background: rgba(8, 17, 39, 0.90);
   border: 1px solid rgba(145, 163, 220, 0.22);
-  border-radius: 27px;
-  box-shadow: 0 3px 16px rgba(4, 9, 24, 0.40);
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(4, 9, 24, 0.36);
 }
 
 tooltip {
@@ -26,13 +26,13 @@ tooltip {
 #custom-tag-2,
 #custom-tag-3,
 #custom-tag-4 {
-  min-width: 24px;
-  padding: 0 11px;
-  margin: 7px 0;
+  min-width: 18px;
+  padding: 0 7px;
+  margin: 4px 0;
   color: #dce1f1;
   background: rgba(222, 229, 255, 0.09);
   border: 1px solid rgba(209, 219, 255, 0.04);
-  border-radius: 7px;
+  border-radius: 6px;
 }
 
 #custom-tag-1.active,
@@ -42,7 +42,7 @@ tooltip {
   color: #ffffff;
   background: linear-gradient(135deg, #b789ff, #895ce8);
   border-color: rgba(220, 198, 255, 0.50);
-  box-shadow: 0 0 12px rgba(166, 115, 255, 0.35);
+  box-shadow: 0 0 8px rgba(166, 115, 255, 0.30);
 }
 
 #custom-tag-1.occupied,
@@ -74,8 +74,8 @@ tooltip {
 #network,
 #pulseaudio,
 #clock {
-  padding: 0 12px;
-  margin: 8px 0;
+  padding: 0 8px;
+  margin: 5px 0;
   color: #e1e5f2;
   background: transparent;
   border-left: 1px solid rgba(203, 215, 248, 0.18);
@@ -83,7 +83,7 @@ tooltip {
 
 #network {
   color: #8de1d3;
-  font-size: 17px;
+  font-size: 14px;
 }
 
 #pulseaudio {
@@ -91,5 +91,5 @@ tooltip {
 }
 
 #clock {
-  padding-right: 18px;
+  padding-right: 12px;
 }
