@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+import json
+import logging
+import os
+import re
+import subprocess
+import sys
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+gi.require_version("GtkLayerShell", "0.1")
+gi.require_version("Pango", "1.0")
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, GtkLayerShell, Pango
+
+
+POLL_MILLISECONDS = 500
+ICON_SIZE = 18
+FALLBACK_ICON = "application-x-executable"
+
+
+def normalized(value):
+    return re.sub(r"[^a-z0-9]", "", value.casefold())
+
+
+def desktop_icon_name(app_id):
+    if not app_id:
+        return None
+
+    target = normalized(app_id.removesuffix(".desktop"))
+    apps = Gio.AppInfo.get_all()
+    exact = []
+    partial = []
+
+    for app in apps:
+        if not isinstance(app, Gio.DesktopAppInfo):
+            continue
+        desktop_id = app.get_id() or ""
+        desktop_name = desktop_id.removesuffix(".desktop")
+        wm_class = app.get_string("StartupWMClass") or ""
+        aliases = {
+            normalized(desktop_name),
+            normalized(os.path.basename(desktop_name)),
+            normalized(wm_class),
+        }
+        if target in aliases:
+            exact.append(app)
+        elif target and any(alias and (alias.endswith(target) or target.endswith(alias)) for alias in aliases):
+            partial.append(app)
+
+    for app in exact + partial:
+        icon_name = app.get_string("Icon")
+        if icon_name:
+            return icon_name
+    return None
+
+
+def load_icon(theme, app_id):
+    icon_name = desktop_icon_name(app_id) or FALLBACK_ICON
+    if os.path.isabs(icon_name):
+        try:
+            return GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                icon_name,
+                ICON_SIZE,
+                ICON_SIZE,
+                True,
+            )
+        except GLib.Error:
+            icon_name = FALLBACK_ICON
+    icon = theme.load_icon(icon_name, ICON_SIZE, Gtk.IconLookupFlags.FORCE_SIZE)
+    if icon is None and icon_name != FALLBACK_ICON:
+        icon = theme.load_icon(FALLBACK_ICON, ICON_SIZE, Gtk.IconLookupFlags.FORCE_SIZE)
+    return icon
+
+
+def focused_client(output_name):
+    try:
+        result = subprocess.run(
+            ["mmsg", "get", "monitor", output_name],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=1.0,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        return None, f"Could not query MangoWM focus: {error}"
+
+    try:
+        monitor = json.loads(result.stdout)
+        active = monitor.get("active_client") or {}
+        if not isinstance(active, dict):
+            raise ValueError("active_client is not an object")
+        title = active.get("title")
+        app_id = active.get("appid")
+        return (
+            (title if isinstance(title, str) else "", app_id if isinstance(app_id, str) else ""),
+            None,
+        )
+    except (json.JSONDecodeError, ValueError, AttributeError) as error:
+        return None, f"Could not parse MangoWM focused-client response: {error}"
+
+
+class TitleOverlay:
+    def __init__(self, output_name):
+        self.output_name = output_name
+        self.last_client = None
+        self.last_error = None
+
+        self.window = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
+        self.window.set_decorated(False)
+        self.window.set_resizable(False)
+        self.window.set_accept_focus(False)
+        self.window.set_focus_on_map(False)
+        self.window.set_app_paintable(True)
+        self.window.set_visual(self.window.get_screen().get_rgba_visual())
+
+        GtkLayerShell.init_for_window(self.window)
+        GtkLayerShell.set_namespace(self.window, "waybar-focused-window-title")
+        GtkLayerShell.set_layer(self.window, GtkLayerShell.Layer.OVERLAY)
+        GtkLayerShell.set_anchor(self.window, GtkLayerShell.Edge.TOP, True)
+        GtkLayerShell.set_margin(self.window, GtkLayerShell.Edge.TOP, 20)
+        GtkLayerShell.set_exclusive_zone(self.window, -1)
+        GtkLayerShell.set_keyboard_mode(self.window, GtkLayerShell.KeyboardMode.NONE)
+
+        self.group = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=7)
+        self.image = Gtk.Image()
+        self.label = Gtk.Label()
+        self.label.set_ellipsize(Pango.EllipsizeMode.END)
+        self.label.set_max_width_chars(64)
+        self.group.pack_start(self.image, False, False, 0)
+        self.group.pack_start(self.label, False, False, 0)
+        self.window.add(self.group)
+        self.group.get_style_context().add_class("focused-window-group")
+
+        css = Gtk.CssProvider()
+        css.load_from_data(
+            b"window { background-color: transparent; } "
+            b".focused-window-group { color: #eef0fa; background-color: transparent; "
+            b"font-family: 'JetBrainsMono Nerd Font', sans-serif; font-size: 15px; font-weight: 500; }"
+        )
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            css,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
+        self.theme = Gtk.IconTheme.get_default()
+        self.window.show_all()
+        self.image.hide()
+        self.label.hide()
+        GLib.timeout_add(POLL_MILLISECONDS, self.refresh)
+        self.refresh()
+
+    def refresh(self):
+        client, error = focused_client(self.output_name)
+        if error != self.last_error and error:
+            logging.warning("%s", error)
+        self.last_error = error
+        if client == self.last_client:
+            return GLib.SOURCE_CONTINUE
+        self.last_client = client
+
+        if client is None or not client[0]:
+            self.image.hide()
+            self.label.hide()
+            tooltip = "MangoWM focused-window information is unavailable" if client is None else "No focused window"
+            payload = {"text": " ", "class": "empty", "tooltip": tooltip}
+        else:
+            title, app_id = client
+            try:
+                pixbuf = load_icon(self.theme, app_id)
+            except GLib.Error as error:
+                logging.warning("Could not load icon for %s: %s", app_id or "unknown application", error)
+                pixbuf = None
+            if pixbuf is None:
+                self.image.set_from_icon_name(FALLBACK_ICON, Gtk.IconSize.MENU)
+            else:
+                self.image.set_from_pixbuf(pixbuf)
+            self.image.show()
+            self.label.set_text(title)
+            self.label.set_tooltip_text(title)
+            self.label.show()
+            payload = {"text": " ", "class": "focused", "tooltip": title}
+
+        print(json.dumps(payload, ensure_ascii=False), flush=True)
+        return GLib.SOURCE_CONTINUE
+
+
+def main():
+    logging.basicConfig(stream=sys.stderr, level=logging.WARNING, format="window-title-overlay: %(message)s")
+    output_name = os.environ.get("WAYBAR_OUTPUT_NAME")
+    if not output_name:
+        logging.error("Waybar did not provide WAYBAR_OUTPUT_NAME; title overlay will not start")
+        print(json.dumps({"text": " ", "class": "unavailable", "tooltip": "Missing Waybar output name"}), flush=True)
+        return 1
+
+    TitleOverlay(output_name)
+    Gtk.main()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

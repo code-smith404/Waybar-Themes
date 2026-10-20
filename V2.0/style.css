@@ -1,0 +1,95 @@
+* {
+  border: none;
+  border-radius: 0;
+  font-family: "JetBrainsMono Nerd Font", "Font Awesome 6 Free", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  min-height: 0;
+}
+
+window#waybar {
+  color: #e4e7f2;
+  background: rgba(8, 17, 39, 0.90);
+  border: 1px solid rgba(145, 163, 220, 0.22);
+  border-radius: 27px;
+  box-shadow: 0 3px 16px rgba(4, 9, 24, 0.40);
+}
+
+tooltip {
+  color: #e5e9f5;
+  background: rgba(12, 23, 49, 0.97);
+  border: 1px solid rgba(145, 163, 220, 0.30);
+  border-radius: 9px;
+}
+
+#custom-tag-1,
+#custom-tag-2,
+#custom-tag-3,
+#custom-tag-4 {
+  min-width: 24px;
+  padding: 0 11px;
+  margin: 7px 0;
+  color: #dce1f1;
+  background: rgba(222, 229, 255, 0.09);
+  border: 1px solid rgba(209, 219, 255, 0.04);
+  border-radius: 7px;
+}
+
+#custom-tag-1.active,
+#custom-tag-2.active,
+#custom-tag-3.active,
+#custom-tag-4.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #b789ff, #895ce8);
+  border-color: rgba(220, 198, 255, 0.50);
+  box-shadow: 0 0 12px rgba(166, 115, 255, 0.35);
+}
+
+#custom-tag-1.occupied,
+#custom-tag-2.occupied,
+#custom-tag-3.occupied,
+#custom-tag-4.occupied {
+  color: #ffffff;
+}
+
+#custom-tag-1.urgent,
+#custom-tag-2.urgent,
+#custom-tag-3.urgent,
+#custom-tag-4.urgent {
+  color: #ffffff;
+  background: #d66f88;
+}
+
+#custom-window-title {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  font-size: 0;
+  color: transparent;
+  background: transparent;
+}
+
+#cpu,
+#memory,
+#network,
+#pulseaudio,
+#clock {
+  padding: 0 12px;
+  margin: 8px 0;
+  color: #e1e5f2;
+  background: transparent;
+  border-left: 1px solid rgba(203, 215, 248, 0.18);
+}
+
+#network {
+  color: #8de1d3;
+  font-size: 17px;
+}
+
+#pulseaudio {
+  color: #d8e5ff;
+}
+
+#clock {
+  padding-right: 18px;
+}

@@ -1,0 +1,96 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 50,
+  "spacing": 6,
+  "margin": "7px 7px 0px",
+  "fixed-center": true,
+  "modules-left": [
+    "custom/tag-1",
+    "custom/tag-2",
+    "custom/tag-3",
+    "custom/tag-4"
+  ],
+  "modules-center": [
+    "custom/window-title"
+  ],
+  "modules-right": [
+    "cpu",
+    "memory",
+    "network",
+    "pulseaudio",
+    "clock"
+  ],
+  "custom/tag-1": {
+    "exec": "${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts/mango-tags 1",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 1,
+    "on-click": "mmsg dispatch view,1 >/dev/null",
+    "on-click-right": "mmsg dispatch toggleview,1 >/dev/null"
+  },
+  "custom/tag-2": {
+    "exec": "${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts/mango-tags 2",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 1,
+    "on-click": "mmsg dispatch view,2 >/dev/null",
+    "on-click-right": "mmsg dispatch toggleview,2 >/dev/null"
+  },
+  "custom/tag-3": {
+    "exec": "${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts/mango-tags 3",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 1,
+    "on-click": "mmsg dispatch view,3 >/dev/null",
+    "on-click-right": "mmsg dispatch toggleview,3 >/dev/null"
+  },
+  "custom/tag-4": {
+    "exec": "${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts/mango-tags 4",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 1,
+    "on-click": "mmsg dispatch view,4 >/dev/null",
+    "on-click-right": "mmsg dispatch toggleview,4 >/dev/null"
+  },
+  "custom/window-title": {
+    "exec": "${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts/window-title-overlay",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": false,
+    "restart-interval": 2
+  },
+  "cpu": {
+    "interval": 3,
+    "format": "  {usage}%",
+    "tooltip-format": "CPU usage: {usage}%"
+  },
+  "memory": {
+    "interval": 5,
+    "format": "󰍛  {used:0.1f} GB",
+    "tooltip-format": "Memory: {used} / {total}"
+  },
+  "network": {
+    "interval": 5,
+    "format-wifi": "",
+    "format-ethernet": "󰈀",
+    "format-disconnected": "󰖪",
+    "tooltip-format-wifi": "{essid} ({signalStrength}%)",
+    "tooltip-format-ethernet": "{ifname}",
+    "tooltip-format-disconnected": "Network disconnected"
+  },
+  "pulseaudio": {
+    "format": "  {volume}%",
+    "format-muted": "󰖁  muted",
+    "scroll-step": 5,
+    "tooltip-format": "{desc}: {volume}%"
+  },
+  "clock": {
+    "format": "{:%b %d  %H:%M}",
+    "tooltip-format": "{:%A, %B %d, %Y}"
+  }
+}
